@@ -11,7 +11,8 @@ expect.addAssertion('to contain [no] (asset|assets)', function (expect, subject,
     } else if (typeof number === 'undefined') {
         number = 1;
     }
-    expect(subject.findAssets(queryObj).length, 'to equal', number);
+
+    expect(subject.findAssets(queryObj), 'to have length', number);
 });
 
 expect.addAssertion('to contain (url|urls)', function (expect, subject, urls) {
@@ -23,7 +24,7 @@ expect.addAssertion('to contain (url|urls)', function (expect, subject, urls) {
     }, this);
     this.errorMode = 'nested';
     urls.forEach(function (url) {
-        expect(subject.findAssets({url: url}).length, 'to equal', 1);
+        expect(subject.findAssets({url: url}), 'to have length', 1);
     });
 });
 
@@ -41,6 +42,8 @@ expect.addAssertion('to contain [no] (relation|relations)', function (expect, su
 });
 
 expect.addType({
+    name: 'AssetGraph.Asset',
+    base: 'object',
     identify: function (obj) {
         return obj && obj.isAsset;
     },
@@ -52,8 +55,8 @@ expect.addType({
             // && same outgoing relations
         );
     },
-    inspect: function (asset) {
-        return asset.urlOrDescription;
+    inspect: function (asset, depth, output) {
+        return output.text(asset.urlOrDescription);
     },
     toJSON: function (asset) {
         return {
@@ -67,13 +70,15 @@ expect.addType({
 });
 
 expect.addType({
+    name: 'AssetGraph',
+    base: 'object',
     identify: function (obj) {
         return obj && obj.isAssetGraph;
     },
-    inspect: function (assetGraph) {
-        return ['AssetGraph'].concat(assetGraph.findAssets({isInline: false}).map(function (asset) {
+    inspect: function (assetGraph, depth, output) {
+        return output.text(['AssetGraph'].concat(assetGraph.findAssets({isInline: false}).map(function (asset) {
             return '  ' + (asset.isLoaded ? ' ' : '!') + ' ' + asset.urlOrDescription;
-        }, this)).join('\n  ');
+        }, this)).join('\n  '));
     },
     toJSON: function (assetGraph) {
         return {
