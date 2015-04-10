@@ -9,7 +9,7 @@ describe('makeBabelJob', function () {
     it('should extract a translation job and set null values in the correct places in the existing i18n files', function (done) {
         var babelDir = temp.mkdirSync(),
             tmpTestCaseCopyDir = temp.mkdirSync(),
-            copyCommand = 'cp \'' + __dirname + '/../../testdata/bin\'/makeBabelJob/* ' + tmpTestCaseCopyDir;
+            copyCommand = 'cp \'' + __dirname + '/../../testdata/bin\'/makeBabelJob/complex/* ' + tmpTestCaseCopyDir;
 
         childProcess.exec(copyCommand, function (err, stdout, stderr) {
             if (err) {
