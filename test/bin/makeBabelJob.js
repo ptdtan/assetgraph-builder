@@ -263,12 +263,13 @@ describe('makeBabelJob', function () {
                     '--root', tmpTestCaseCopyDir,
                     '--i18n', Path.resolve(tmpTestCaseCopyDir, 'index.i18n'),
                     Path.resolve(tmpTestCaseCopyDir, 'index.html'),
-//                    '--defaultlocale', 'en',
                     '--locales', 'en,cs'
                 ]),
                 buffersByStreamName = {},
                 streamNames = ['stdout', 'stderr'];
+
             streamNames.forEach(function (streamName) {
+makeBabelJobProcess[streamName].pipe(process.stdout);
                 buffersByStreamName[streamName] = [];
                 makeBabelJobProcess[streamName].on('data', function (chunk) {
                     buffersByStreamName[streamName].push(chunk);
@@ -290,6 +291,11 @@ describe('makeBabelJob', function () {
                     return done(new Error('The makeBabelJob process ended with a non-zero exit code: ' + exitCode + getStreamOutputText()));
                 }
 
+                expect(fs.readFileSync(Path.resolve(babelDir, 'cs.txt'), 'utf-8'), 'to equal', [
+                    'KeyPartiallyTranslatedToCzech[many]=',
+                    ''
+                ].join('\n'));
+
                 expect(fs.readdirSync(babelDir).sort(), 'to equal', ['cs.txt', 'en.txt']);
 
                 expect(fs.readFileSync(Path.resolve(babelDir, 'en.txt'), 'utf-8'), 'to equal', [
@@ -298,16 +304,10 @@ describe('makeBabelJob', function () {
                     ''
                 ].join('\n'));
 
-                expect(fs.readFileSync(Path.resolve(babelDir, 'cs.txt'), 'utf-8'), 'to equal', [
-                    'KeyPartiallyTranslatedToCzech[few]=',
-                    'KeyPartiallyTranslatedToCzech[many]=',
-                    ''
-                ].join('\n'));
-
                 expect(JSON.parse(fs.readFileSync(Path.resolve(tmpTestCaseCopyDir, 'index.i18n'), 'utf-8')), 'to equal', {
                     KeyPartiallyTranslatedToCzech: {
                         en: {one: 'the one', other: 'the other'},
-                        cs: {one: 'xxxx', other: 'yyyy', few: null, many: null}
+                        cs: {one: 'xxxx', other: 'yyyy', few: 'zzzz', many: null}
                     }
                 });
                 done();

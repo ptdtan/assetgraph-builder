@@ -187,12 +187,22 @@ new AssetGraph({root: commandLineOptions.root})
             }
         }
 
+        var isRelevantInLocaleByFlattenedKeyByLocaleId = {},
+            keyByFlattenedKey = {};
+
         Object.keys(allKeys).forEach(function (key) {
             Object.keys(allKeys[key]).forEach(function (localeId) {
+                isRelevantInLocaleByFlattenedKeyByLocaleId[localeId] = isRelevantInLocaleByFlattenedKeyByLocaleId[localeId] || {};
                 var valueByFlattenedKey = flattenKey(key, allKeys[key][localeId]);
                 Object.keys(valueByFlattenedKey).forEach(function (flattenedKey) {
+                    keyByFlattenedKey[flattenedKey] = key;
                     allKeysFlattened[flattenedKey] = allKeysFlattened[flattenedKey] || {};
                     allKeysFlattened[flattenedKey][localeId] = valueByFlattenedKey[flattenedKey];
+                });
+
+                var flattenedAndCoalesced = flattenKey(key, coalescePluralsToLocale(allKeys[key][localeId], localeId));
+                Object.keys(flattenedAndCoalesced).forEach(function (flattenedKey) {
+                    isRelevantInLocaleByFlattenedKeyByLocaleId[localeId][flattenedKey] = true;
                 });
             });
         });
@@ -201,15 +211,33 @@ new AssetGraph({root: commandLineOptions.root})
         Object.keys(allKeysFlattened).forEach(function (flattenedKey) {
             alreadyTranslatedByFlattenedKey[flattenedKey] = true;
             localeIds.forEach(function (localeId) {
+console.log("checking if", flattenedKey, "is translated to", localeId);
+                if (!isRelevantInLocaleByFlattenedKeyByLocaleId[localeId][flattenedKey]) {
+console.log("=> not relevant");
+                    return;
+                }
                 var prioritizedLocaleIds = i18nTools.expandLocaleIdToPrioritizedList(localeId);
                 for (var i = 0 ; i < prioritizedLocaleIds.length ; i += 1) {
                     if (prioritizedLocaleIds[i] in allKeysFlattened[flattenedKey]) {
+console.log("=> it is because it is in", prioritizedLocaleIds[i]);
                         return;
                     }
                 }
+console.log(flattenedKey, 'not already translated to', localeId);
                 alreadyTranslatedByFlattenedKey[flattenedKey] = false;
             });
         });
+
+        var alreadyTranslatedByKey = {};
+        Object.keys(keyByFlattenedKey).forEach(function (flattenedKey) {
+            var key = keyByFlattenedKey[flattenedKey];
+            if (alreadyTranslatedByKey[key] !== false) {
+                alreadyTranslatedByKey[key] = alreadyTranslatedByFlattenedKey[flattenedKey] || false;
+            }
+        });
+
+console.log('alreadyTranslatedByFlattenedKey', alreadyTranslatedByFlattenedKey);
+console.log('alreadyTranslatedByKey', alreadyTranslatedByKey);
 
         localeIds.forEach(function (localeId) {
             var babelSrc = '',
