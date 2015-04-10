@@ -198,16 +198,16 @@ new AssetGraph({root: commandLineOptions.root})
         });
 
         // Note which flattened keys have already been translated to all the locales we've been asked to process:
-        Object.keys(allKeysFlattened).forEach(function (key) {
-            alreadyTranslatedByFlattenedKey[key] = true;
+        Object.keys(allKeysFlattened).forEach(function (flattenedKey) {
+            alreadyTranslatedByFlattenedKey[flattenedKey] = true;
             localeIds.forEach(function (localeId) {
                 var prioritizedLocaleIds = i18nTools.expandLocaleIdToPrioritizedList(localeId);
                 for (var i = 0 ; i < prioritizedLocaleIds.length ; i += 1) {
-                    if (prioritizedLocaleIds[i] in allKeysFlattened[key]) {
+                    if (prioritizedLocaleIds[i] in allKeysFlattened[flattenedKey]) {
                         return;
                     }
                 }
-                alreadyTranslatedByFlattenedKey[key] = false;
+                alreadyTranslatedByFlattenedKey[flattenedKey] = false;
             });
         });
 
