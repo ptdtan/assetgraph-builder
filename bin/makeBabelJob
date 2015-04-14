@@ -188,6 +188,7 @@ new AssetGraph({root: commandLineOptions.root})
         }
 
         var isRelevantInLocaleByFlattenedKeyByLocaleId = {},
+            isRelevantInAnyLocaleByFlattenedKey = {},
             keyByFlattenedKey = {};
 
         Object.keys(allKeys).forEach(function (key) {
@@ -195,35 +196,33 @@ new AssetGraph({root: commandLineOptions.root})
                 isRelevantInLocaleByFlattenedKeyByLocaleId[localeId] = isRelevantInLocaleByFlattenedKeyByLocaleId[localeId] || {};
                 var valueByFlattenedKey = flattenKey(key, allKeys[key][localeId]);
                 Object.keys(valueByFlattenedKey).forEach(function (flattenedKey) {
-                    keyByFlattenedKey[flattenedKey] = key;
                     allKeysFlattened[flattenedKey] = allKeysFlattened[flattenedKey] || {};
                     allKeysFlattened[flattenedKey][localeId] = valueByFlattenedKey[flattenedKey];
+                    keyByFlattenedKey[flattenedKey] = key;
                 });
 
                 var flattenedAndCoalesced = flattenKey(key, coalescePluralsToLocale(allKeys[key][localeId], localeId));
                 Object.keys(flattenedAndCoalesced).forEach(function (flattenedKey) {
                     isRelevantInLocaleByFlattenedKeyByLocaleId[localeId][flattenedKey] = true;
+                    isRelevantInAnyLocaleByFlattenedKey[flattenedKey] = true;
+                    keyByFlattenedKey[flattenedKey] = key;
                 });
             });
         });
 
         // Note which flattened keys have already been translated to all the locales we've been asked to process:
-        Object.keys(allKeysFlattened).forEach(function (flattenedKey) {
+        Object.keys(isRelevantInAnyLocaleByFlattenedKey).forEach(function (flattenedKey) {
             alreadyTranslatedByFlattenedKey[flattenedKey] = true;
             localeIds.forEach(function (localeId) {
-console.log("checking if", flattenedKey, "is translated to", localeId);
                 if (!isRelevantInLocaleByFlattenedKeyByLocaleId[localeId][flattenedKey]) {
-console.log("=> not relevant");
                     return;
                 }
                 var prioritizedLocaleIds = i18nTools.expandLocaleIdToPrioritizedList(localeId);
                 for (var i = 0 ; i < prioritizedLocaleIds.length ; i += 1) {
-                    if (prioritizedLocaleIds[i] in allKeysFlattened[flattenedKey]) {
-console.log("=> it is because it is in", prioritizedLocaleIds[i]);
+                    if (allKeysFlattened[flattenedKey] && prioritizedLocaleIds[i] in allKeysFlattened[flattenedKey]) {
                         return;
                     }
                 }
-console.log(flattenedKey, 'not already translated to', localeId);
                 alreadyTranslatedByFlattenedKey[flattenedKey] = false;
             });
         });
@@ -292,11 +291,12 @@ console.log('alreadyTranslatedByKey', alreadyTranslatedByKey);
                     defaultValueInTheOccurrence = coalescePluralsToLocale(defaultValueInTheOccurrence, localeId);
                     defaultValueInTheOccurrenceByFlattenedKey = flattenKey(key, defaultValueInTheOccurrence);
                     flattenedKeysThatMustBePresent = _.union(Object.keys(defaultValueInTheOccurrenceByFlattenedKey), flattenedKeysThatMustBePresent);
+console.log('hey', flattenedKeysThatMustBePresent);
                 }
 
                 var keyNeedsTranslation = false;
                 flattenedKeysThatMustBePresent.forEach(function (flattenedKey) {
-                    if (alreadyTranslatedByFlattenedKey[flattenedKey] && !commandLineOptions.all) {
+                    if (alreadyTranslatedByFlattenedKey[flattenedKey] && !commandLineOptions.all && (!isDefaultLocale || alreadyTranslatedByKey[keyByFlattenedKey[flattenedKey]])) {
                         return;
                     }
                     var value = valueByFlattenedKey[flattenedKey];

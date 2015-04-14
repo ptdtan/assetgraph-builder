@@ -269,7 +269,6 @@ describe('makeBabelJob', function () {
                 streamNames = ['stdout', 'stderr'];
 
             streamNames.forEach(function (streamName) {
-makeBabelJobProcess[streamName].pipe(process.stdout);
                 buffersByStreamName[streamName] = [];
                 makeBabelJobProcess[streamName].on('data', function (chunk) {
                     buffersByStreamName[streamName].push(chunk);
@@ -301,6 +300,8 @@ makeBabelJobProcess[streamName].pipe(process.stdout);
                 expect(fs.readFileSync(Path.resolve(babelDir, 'en.txt'), 'utf-8'), 'to equal', [
                     'KeyPartiallyTranslatedToCzech[one]=the one',
                     'KeyPartiallyTranslatedToCzech[other]=the other',
+                    '# NOTE: The language cs needs this additional key to cover all plural forms:',
+                    '# KeyPartiallyTranslatedToCzech[many]=',
                     ''
                 ].join('\n'));
 
