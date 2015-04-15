@@ -92,17 +92,21 @@ function nullIfNullOrUndefined(val) {
     }
 }
 
-function nullOutLeaves(obj) {
+function nullOutLeaves(obj, undefinedOnly) {
     if (Array.isArray(obj)) {
-        return obj.map(nullOutLeaves);
+        return obj.map(function (item) {
+            return nullOutLeaves(item, undefinedOnly);
+        });
     } else if (typeof obj === 'object' && obj !== null) {
         var resultObj = {};
         Object.keys(obj).forEach(function (propertyName) {
-            resultObj[propertyName] = nullOutLeaves(obj[propertyName]);
+            resultObj[propertyName] = nullOutLeaves(obj[propertyName], undefinedOnly);
         });
         return resultObj;
-    } else {
+    } else if (typeof obj === 'undefined' || !undefinedOnly) {
         return null;
+    } else {
+        return obj;
     }
 }
 
@@ -235,9 +239,6 @@ new AssetGraph({root: commandLineOptions.root})
             }
         });
 
-console.log('alreadyTranslatedByFlattenedKey', alreadyTranslatedByFlattenedKey);
-console.log('alreadyTranslatedByKey', alreadyTranslatedByKey);
-
         localeIds.forEach(function (localeId) {
             var babelSrc = '',
                 isDefaultLocale = localeId === defaultLocaleId || localeId.indexOf(defaultLocaleId + '_') === 0,
@@ -291,7 +292,6 @@ console.log('alreadyTranslatedByKey', alreadyTranslatedByKey);
                     defaultValueInTheOccurrence = coalescePluralsToLocale(defaultValueInTheOccurrence, localeId);
                     defaultValueInTheOccurrenceByFlattenedKey = flattenKey(key, defaultValueInTheOccurrence);
                     flattenedKeysThatMustBePresent = _.union(Object.keys(defaultValueInTheOccurrenceByFlattenedKey), flattenedKeysThatMustBePresent);
-console.log('hey', flattenedKeysThatMustBePresent);
                 }
 
                 var keyNeedsTranslation = false;
@@ -362,6 +362,11 @@ console.log('hey', flattenedKeysThatMustBePresent);
                             }
                             i18nAssetForKey.parseTree[key][localeId] = newValue;
                         }
+                        i18nAssetForKey.markDirty();
+                    } else {
+                        var existingValue = i18nAssetForKey.parseTree[key][localeId],
+                            newValue = nullOutLeaves(coalescePluralsToLocale(existingValue, localeId), true);
+                        i18nAssetForKey.parseTree[key][localeId] = newValue;
                         i18nAssetForKey.markDirty();
                     }
                 }
