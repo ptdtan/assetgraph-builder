@@ -101,8 +101,6 @@ describe('makeBabelJob', function () {
                 expect(fs.readFileSync(Path.resolve(babelDir, 'cs.txt'), 'utf-8'), 'to equal', [
                     'KeyAlreadyPartiallyTranslatedInIndexI18n=',
                     'KeyAlreadyPartiallyTranslatedInOtherI18n=',
-                    'KeyAlreadyTranslatedToAllLanguages[few]=fzd',
-                    'KeyAlreadyTranslatedToAllLanguages[many]=fzd',
                     'KeyAlreadyTranslatedToCzech[few]=fzd',
                     'KeyAlreadyTranslatedToCzech[many]=fzd',
                     'KeyAlreadyTranslatedToCzech[one]=fzd',
@@ -122,8 +120,6 @@ describe('makeBabelJob', function () {
                 expect(fs.readFileSync(Path.resolve(babelDir, 'pl.txt'), 'utf-8'), 'to equal', [
                     'KeyAlreadyPartiallyTranslatedInIndexI18n=',
                     'KeyAlreadyPartiallyTranslatedInOtherI18n=',
-                    'KeyAlreadyTranslatedToAllLanguages[few]=fzz',
-                    'KeyAlreadyTranslatedToAllLanguages[many]=fzz',
                     'KeyAlreadyTranslatedToCzech[few]=',
                     'KeyAlreadyTranslatedToCzech[many]=',
                     'KeyAlreadyTranslatedToCzech[one]=',

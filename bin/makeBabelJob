@@ -174,8 +174,6 @@ new AssetGraph({root: commandLineOptions.root})
         var initialHtmlAssets = assetGraph.findAssets({type: 'Html', isInitial: true}),
             occurrencesByKey = i18nTools.findOccurrences(assetGraph, initialHtmlAssets),
             allKeys = i18nTools.extractAllKeys(assetGraph),
-            allKeysFlattened = {},
-            alreadyTranslatedByFlattenedKey = {},
             i18nAssetForAllKeys;
 
         if (i18nUrl) {
@@ -193,41 +191,54 @@ new AssetGraph({root: commandLineOptions.root})
 
         var isRelevantInLocaleByFlattenedKeyByLocaleId = {},
             isRelevantInAnyLocaleByFlattenedKey = {},
-            keyByFlattenedKey = {};
+            keyByFlattenedKey = {},
+            isTranslatedByFlattenedKeyByLocaleId = {};
 
-        Object.keys(allKeys).forEach(function (key) {
-            Object.keys(allKeys[key]).forEach(function (localeId) {
+        Object.keys(occurrencesByKey).forEach(function (key) {
+            var occurrences = occurrencesByKey[key],
+                defaultValueInTheOccurrence,
+                defaultValue;
+
+            // Look for a default value in the occurrences:
+            occurrences.forEach(function (occurrence) {
+                // FIXME: Warn about multiple different default values?
+                defaultValueInTheOccurrence = occurrence.defaultValue;
+            });
+
+            if (key in allKeys && defaultLocaleId in allKeys[key]) {
+                defaultValue = allKeys[key][defaultLocaleId];
+            } else {
+                defaultValue = defaultValueInTheOccurrence;
+            }
+
+            localeIds.forEach(function (localeId) {
+                var value,
+                    isDefaultValue = false;
+                if (key in allKeys && localeId in allKeys[key]) {
+                    value = allKeys[key][localeId];
+                } else {
+                    value = nullOutLeaves(defaultValue);
+                    isDefaultValue = true;
+                }
+
                 isRelevantInLocaleByFlattenedKeyByLocaleId[localeId] = isRelevantInLocaleByFlattenedKeyByLocaleId[localeId] || {};
-                var valueByFlattenedKey = flattenKey(key, allKeys[key][localeId]);
-                Object.keys(valueByFlattenedKey).forEach(function (flattenedKey) {
-                    allKeysFlattened[flattenedKey] = allKeysFlattened[flattenedKey] || {};
-                    allKeysFlattened[flattenedKey][localeId] = valueByFlattenedKey[flattenedKey];
-                    keyByFlattenedKey[flattenedKey] = key;
-                });
+                isTranslatedByFlattenedKeyByLocaleId[localeId] = isTranslatedByFlattenedKeyByLocaleId[localeId] || {};
+                var flattenedAndCoalesced = flattenKey(key, coalescePluralsToLocale(value, localeId));
 
-                var flattenedAndCoalesced = flattenKey(key, coalescePluralsToLocale(allKeys[key][localeId], localeId));
                 Object.keys(flattenedAndCoalesced).forEach(function (flattenedKey) {
                     isRelevantInLocaleByFlattenedKeyByLocaleId[localeId][flattenedKey] = true;
+                    var value = flattenedAndCoalesced[flattenedKey];
+                    isTranslatedByFlattenedKeyByLocaleId[localeId][flattenedKey] = !isDefaultValue && typeof value !== 'undefined';
                     isRelevantInAnyLocaleByFlattenedKey[flattenedKey] = true;
                     keyByFlattenedKey[flattenedKey] = key;
                 });
             });
         });
 
-        // Note which flattened keys have already been translated to all the locales we've been asked to process:
-        Object.keys(isRelevantInAnyLocaleByFlattenedKey).forEach(function (flattenedKey) {
-            alreadyTranslatedByFlattenedKey[flattenedKey] = true;
-            localeIds.forEach(function (localeId) {
-                if (!isRelevantInLocaleByFlattenedKeyByLocaleId[localeId][flattenedKey]) {
-                    return;
-                }
-                var prioritizedLocaleIds = i18nTools.expandLocaleIdToPrioritizedList(localeId);
-                for (var i = 0 ; i < prioritizedLocaleIds.length ; i += 1) {
-                    if (allKeysFlattened[flattenedKey] && prioritizedLocaleIds[i] in allKeysFlattened[flattenedKey]) {
-                        return;
-                    }
-                }
-                alreadyTranslatedByFlattenedKey[flattenedKey] = false;
+        var alreadyTranslatedByFlattenedKey = {};
+        Object.keys(keyByFlattenedKey).forEach(function (flattenedKey) {
+            alreadyTranslatedByFlattenedKey[flattenedKey] = localeIds.every(function (localeId) {
+                return !isRelevantInLocaleByFlattenedKeyByLocaleId[localeId][flattenedKey] || isTranslatedByFlattenedKeyByLocaleId[localeId][flattenedKey];
             });
         });
 
@@ -350,11 +361,11 @@ new AssetGraph({root: commandLineOptions.root})
                         i18nAssetForKey.markDirty();
                     }
                     i18nAssetForKey.parseTree[key] = i18nAssetForKey.parseTree[key] || {};
+                    var newValue;
                     if (!(localeId in i18nAssetForKey.parseTree[key])) {
                         if (localeId.indexOf(defaultLocaleId) === 0) {
                             i18nAssetForKey.parseTree[key][localeId] = defaultValue;
                         } else {
-                            var newValue;
                             if (omitExistingValues) {
                                 newValue = nullOutLeaves(coalescePluralsToLocale(value, localeId));
                             } else {
@@ -364,8 +375,8 @@ new AssetGraph({root: commandLineOptions.root})
                         }
                         i18nAssetForKey.markDirty();
                     } else {
-                        var existingValue = i18nAssetForKey.parseTree[key][localeId],
-                            newValue = nullOutLeaves(coalescePluralsToLocale(existingValue, localeId), true);
+                        var existingValue = i18nAssetForKey.parseTree[key][localeId];
+                        newValue = nullOutLeaves(coalescePluralsToLocale(existingValue, localeId), true);
                         i18nAssetForKey.parseTree[key][localeId] = newValue;
                         i18nAssetForKey.markDirty();
                     }
