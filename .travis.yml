@@ -1,13 +1,18 @@
+services:
+  - docker
+
 language: node_js
 node_js:
   - "0.10"
   - "0.12"
   - "4"
+
 addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
     packages:
+    - gcc-4.8
     - g++-4.8
     - libcairo2-dev
     - libjpeg8-dev
@@ -16,8 +21,10 @@ addons:
     - graphicsmagick
     - libjpeg-turbo-progs
     - inkscape
+
 env:
   - CXX=g++-4.8
+  - CC=gcc-4.8
 
 before_install: "rm -f /home/travis/.npm/*.lock"
 
