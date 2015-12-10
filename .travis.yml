@@ -18,7 +18,11 @@ addons:
     - inkscape
 env:
   - CXX=g++-4.8
+
+before_install: "rm -f /home/travis/.npm/*.lock"
+
 script: "npm run-script travis"
+
 after_success: "<coverage/lcov.info ./node_modules/coveralls/bin/coveralls.js"
 
 notifications:
