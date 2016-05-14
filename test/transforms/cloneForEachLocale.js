@@ -190,10 +190,10 @@ describe('cloneForEachLocale', function () {
 
     it('should handle a TR in a data-bind attribute in a .ko template', function (done) {
         new AssetGraph({root: __dirname + '/../../testdata/transforms/cloneForEachLocale/trInHtmlDataBindAttributeInKoTemplate/'})
-            .registerRequireJsConfig()
             .loadAssets('index.html')
             .populate()
-            .flattenRequireJs()
+            .bundleRequireJs()
+            .populate()
             .cloneForEachLocale({type: 'Html'}, {localeIds: ['en_US', 'da']})
             .queue(function (assetGraph) {
                 expect(assetGraph, 'to contain assets', {type: 'Html', isFragment: true}, 2);
