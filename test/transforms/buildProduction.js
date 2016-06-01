@@ -1395,7 +1395,6 @@ describe('buildProduction', function () {
         describe('with an existing policy', function () {
             it('should add image-src data: to an existing CSP when an image has been inlined', function () {
                 return new AssetGraph({root: __dirname + '/../../testdata/transforms/buildProduction/contentSecurityPolicy/existingPolicy/'})
-                    .registerRequireJsConfig({preventPopulationOfJavaScriptAssetsUntilConfigHasBeenFound: true})
                     .loadAssets('index.html')
                     .populate()
                     .buildProduction({contentSecurityPolicy: true, inlineByRelationType: {CssImage: true}})
@@ -1410,7 +1409,6 @@ describe('buildProduction', function () {
             describe('along with a cdnRoot', function () {
                 it('should add the CDN host name to the relevant sections', function () {
                     return new AssetGraph({root: __dirname + '/../../testdata/transforms/buildProduction/contentSecurityPolicy/existingPolicy/'})
-                        .registerRequireJsConfig({preventPopulationOfJavaScriptAssetsUntilConfigHasBeenFound: true})
                         .loadAssets('index.html')
                         .populate()
                         .buildProduction({contentSecurityPolicy: true, cdnRoot: '//my.cdn.com/', inlineByRelationType: {}})
@@ -1432,7 +1430,6 @@ describe('buildProduction', function () {
     describe('with subResourceIntegrity=true', function () {
         it('should leave relations to other domains alone', function () {
             return new AssetGraph({root: __dirname + '/../../testdata/transforms/buildProduction/subResourceIntegrity/scriptsAndStylesheetOnForeignDomain/'})
-                .registerRequireJsConfig({preventPopulationOfJavaScriptAssetsUntilConfigHasBeenFound: true})
                 .loadAssets('index.html')
                 .populate({followRelations: { to: { url: AssetGraph.query.not(/^https?:\/\//)}}})
                 .buildProduction({subResourceIntegrity: true})
@@ -1443,7 +1440,6 @@ describe('buildProduction', function () {
 
         it('should add integrity attributes to local relations', function () {
             return new AssetGraph({root: __dirname + '/../../testdata/transforms/buildProduction/subResourceIntegrity/externalScriptAndStylesheet/'})
-                .registerRequireJsConfig({preventPopulationOfJavaScriptAssetsUntilConfigHasBeenFound: true})
                 .loadAssets('index.html')
                 .populate()
                 .buildProduction({subResourceIntegrity: true, inlineByRelationType: {}})
@@ -1456,7 +1452,6 @@ describe('buildProduction', function () {
 
         it('should add integrity attributes to assets that are put on a CDN', function () {
             return new AssetGraph({root: __dirname + '/../../testdata/transforms/buildProduction/subResourceIntegrity/externalScriptAndStylesheet/'})
-                .registerRequireJsConfig({preventPopulationOfJavaScriptAssetsUntilConfigHasBeenFound: true})
                 .loadAssets('index.html')
                 .populate()
                 .buildProduction({subResourceIntegrity: true, cdnRoot: '//my.cdn.com/', inlineByRelationType: {}})
